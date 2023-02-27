@@ -1,0 +1,109 @@
+version: "3.9"
+
+volumes:
+  db1_target:
+  db2_target:
+  db3_target:
+  db4_target:
+  rest_target:
+
+services:
+  db1: &db
+    build:
+      context: ./
+      dockerfile: ./docker/local/Dockerfile
+    image: backend
+    container_name: db1
+    volumes:
+      - ./src:/app/src
+      - ./Cargo.toml:/app/Cargo.toml
+      - db1_target:/app/target/
+      - ./log:/app/log
+    privileged: true
+    ports:
+      - "8080:8080"
+    command:
+      - "cargo"
+      - "run"
+      - "--"
+      - "--addr=127.0.0.1:8080"
+      - "--file=log"
+      - "--leader=true"
+      - "--replicas=host.docker.internal:8081"
+    depends_on:
+      - db2
+
+  db2:
+    <<: *db
+    container_name: db2
+    volumes:
+      - ./src:/app/src
+      - ./Cargo.toml:/app/Cargo.toml
+      - db2_target:/app/target/
+      - ./log2:/app/log2
+    command:
+      - "cargo"
+      - "run"
+      - "--"
+      - "--addr=127.0.0.1:8081"
+      - "--file=log2"
+      - "--leader=false"
+    depends_on: []
+    ports:
+      - "8081:8081"
+
+  db3:
+    <<: *db
+    container_name: db3
+    volumes:
+      - ./src:/app/src
+      - ./Cargo.toml:/app/Cargo.toml
+      - db3_target:/app/target/
+      - ./log3:/app/log3
+    privileged: true
+    ports:
+      - "8082:8082"
+    command:
+      - "cargo"
+      - "run"
+      - "--"
+      - "--addr=127.0.0.1:8082"
+      - "--file=log3"
+      - "--leader=true"
+      - "--replicas=127.0.0.1:8083"
+    depends_on:
+      - db4
+
+  db4:
+    <<: *db
+    container_name: db4
+    volumes:
+      - ./src:/app/src
+      - ./Cargo.toml:/app/Cargo.toml
+      - db4_target:/app/target/
+      - ./log4:/app/log4
+    command:
+      - "cargo"
+      - "run"
+      - "--"
+      - "--addr=127.0.0.1:8083"
+      - "--file=log4"
+      - "--leader=false"
+    depends_on: []
+    ports:
+      - "8083:8083"
+
+  rest:
+    build:
+      context: ../patrick-db-rest
+      dockerfile: ./docker/local/Dockerfile
+    image: rest
+    container_name: rest
+    volumes:
+      - ./src:/app/src
+      - ./Cargo.toml:/app/Cargo.toml
+      - rest_target:/app/target/
+      - ../patrick-db-client:/patrick-db-client
+    privileged: true
+    ports:
+      - "8080:8080"
