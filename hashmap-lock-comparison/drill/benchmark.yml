@@ -1,0 +1,19 @@
+---
+base: 'http://localhost:8080'
+iterations: 10000
+concurrency: 200
+rampup: 1
+
+plan:
+  - name: Fetch
+    request:
+      url: /
+
+  - name: POST some crafted JSONs stored in CSV
+    request:
+      url: /
+      method: POST
+      body: '{{ item.name }}'
+    with_items_from_csv:
+      file_name: ./fixtures/keys.csv
+      quote_char: "\'"
