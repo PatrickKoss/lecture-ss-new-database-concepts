@@ -36,7 +36,7 @@ async fn main() {
     let leader = env::var("LEADER").ok().unwrap_or(args.leader);
     let replicas = env::var("REPLICAS").ok().unwrap_or(args.replicas);
 
-    hashmap_log::replay_log();
+    hashmap_log::replay_log(&*args.file);
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
     // Create a multi-producer, multi-consumer channel with a buffer size of 100

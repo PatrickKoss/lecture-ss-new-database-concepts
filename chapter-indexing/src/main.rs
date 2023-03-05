@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate lazy_static;
+
 use std::fs;
 use std::fs::{File, OpenOptions};
 use std::io::{BufWriter, Read, Write};
@@ -5,22 +8,31 @@ use std::sync::{Arc};
 use dashmap::mapref::one::Ref;
 use anyhow::Result;
 use tokio::sync::Mutex;
+use clap::{Parser, Subcommand};
+use serde::{Deserialize, Serialize};
 use std::env;
 
-use serde::{Deserialize, Serialize};
-use clap::{Parser};
+#[derive(Subcommand, PartialEq, Debug)]
+enum Action {
+    Add {key: String, value: String},
+    Get {key: String},
+    Delete {key: String},
+}
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    #[arg(short, long, default_value = "127.0.0.1:8080")]
-    addr: String,
-    #[arg(short, long, default_value = "true")]
-    leader: String,
-    #[arg(short, long, default_value = "127.0.0.1:8081")]
-    replicas: String,
     #[arg(short, long, default_value = "log")]
     file: String,
+    #[command(subcommand)]
+    action: Action,
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
+pub struct KeyValue {
+    pub key: String,
+    pub value: Vec<u8>,
+    pub update: bool,
 }
 
 lazy_static! {
@@ -43,59 +55,23 @@ lazy_static! {
     };
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
-pub struct KeyValue {
-    pub key: String,
-    pub value: Vec<u8>,
-    pub update: bool,
-}
-
 pub fn get<'a>(key: &str) -> Option<Ref<'a, String, Vec<u8>>> {
-    HASHMAP.get(key)
+    todo!("get value from the dashmap")
 }
 
 pub async fn insert(key: String, value: Vec<u8>) -> Result<()> {
-    let mut file = FILE.lock().await;
-    let key_value = KeyValue {
-        key,
-        value,
-        update: true,
-    };
-    let buf = bincode::serialize(&key_value)?;
-    file.write_all(&buf)?;
-    file.flush()?;
-
-    HASHMAP.insert(key_value.key, key_value.value);
-
-    Ok(())
+    todo!("insert value into the dashmap and write to the log file")
 }
 
 pub async fn delete(key: &str) -> Result<()> {
-    let mut file = FILE.lock().await;
-    let key_value = KeyValue {
-        key: key.to_string(),
-        value: vec![],
-        update: false,
-    };
-    let buf = bincode::serialize(&key_value)?;
-    file.write_all(&buf)?;
-    file.flush()?;
-
-    HASHMAP.remove(key);
-
-    Ok(())
+    todo!("delete value from the dashmap and write to the log file")
 }
 
 pub fn replay_log(filename: &str) {
     let buf = get_file_as_byte_vec(filename);
     let mut pos = 0;
     while let Ok(key_value) = bincode::deserialize::<KeyValue>(&buf[pos..]) {
-        pos += bincode::serialized_size(&key_value).unwrap() as usize;
-        if key_value.update {
-            HASHMAP.insert(key_value.key, key_value.value);
-        } else {
-            HASHMAP.remove(&key_value.key);
-        }
+        todo!("increment pos by the size of the deserialized KeyValue, insert or delete the key-value pair in the dashmap based on the update field");
     }
 }
 
@@ -112,4 +88,30 @@ fn get_file_as_byte_vec(filename: &str) -> Vec<u8> {
     f.read_exact(&mut buffer).expect("buffer overflow");
 
     buffer
+}
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    let args = Args::parse();
+    replay_log(&args.file);
+    match args.action {
+        Action::Add {key, value} => {
+            println!("add");
+            println!("{}", &key);
+            println!("{}", &value);
+            insert(key, value.into_bytes()).await?
+        }
+        Action::Get {key } => {
+            println!("get");
+            println!("{}", &key);
+            get(&key).map(|r| println!("{:?}", r));
+        }
+        Action::Delete {key} => {
+            println!("delete");
+            println!("{}", &key);
+            delete(&key).await?
+        }
+    }
+
+    Ok(())
 }
