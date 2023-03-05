@@ -37,7 +37,7 @@ pub struct Response {
 
 pub async fn start_leader_server(addr: SocketAddr, tx: Sender<Request>) -> Result<()> {
     log::info!("Starting leader server");
-    let listener = TcpListener::bind(addr).await.unwrap();
+    let listener: TcpListener = TcpListener::bind(addr).await.unwrap();
 
     loop {
         let (stream, _) = listener.accept().await.unwrap();
