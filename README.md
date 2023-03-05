@@ -45,3 +45,10 @@ we will implement simple client-side partitioning to distribute data across mult
 We will discuss various partitioning schemes and their tradeoffs, such as consistent hashing 
 and range partitioning. We will also discuss how to handle data rebalancing and node failures 
 in a partitioned system.
+
+### Transactions
+During the lecture, we discovered that a multi-threaded server can lead to a variety of 
+problems, and we need to exercise caution to avoid anomalies. As a result, we introduced 
+the concept of a single-threaded server to circumvent concurrency issues. 
+In this chapter, we will conduct a small load test to compare the performance of a 
+single-threaded server versus a multi-threaded server.
