@@ -58,9 +58,8 @@ impl Default for Config {
 impl PDBConnectionPool {
     pub async fn new(config: Config) -> Result<Self> {
         let mut connections = VecDeque::new();
-        for _ in 0..config.min_connections {
-            connections.push_back(TcpStream::connect(&config.addr).await?);
-        }
+
+        todo!("push config.min_connections tcp streams to connections");
 
         Ok(Self {
             pool: Arc::new(Mutex::new(connections)),
@@ -75,19 +74,10 @@ impl PDBConnectionPool {
             route: format!("/keys/{}", key),
         };
 
-        let bytes = serialize(&request).unwrap();
-
-        let mut conn = self.get_connection().await.unwrap();
-
-        conn.write_all(&bytes).await.unwrap();
-
-        let mut response_buf = vec![0; 256];
-        conn.read(&mut response_buf).await.unwrap();
-        let response: Response = deserialize(&response_buf).unwrap();
-
-        self.return_connection(conn).await;
-
-        Ok(response)
+        todo!("get connection with self.get_connection(). \
+        Serialize request and send it to the server.\
+        Deserialize the response by creating a buffer and reading into it.\
+        Return the connection to the pool with self.return_connection(conn).");
     }
 
     pub async fn update(&self, key_value: KeyValue) -> Result<Response> {
@@ -96,9 +86,11 @@ impl PDBConnectionPool {
             key_value: Some(key_value),
             route: "/keys".to_string(),
         };
-        let serialized = serialize(&request).unwrap();
 
-        self.send_get_response(&serialized).await
+        todo!("get connection with self.get_connection(). \
+        Serialize request and send it to the server.\
+        Deserialize the response by creating a buffer and reading into it.\
+        Return the connection to the pool with self.return_connection(conn).");
     }
 
     pub async fn delete(&self, key: &str) -> Result<Response> {
@@ -108,9 +100,10 @@ impl PDBConnectionPool {
             route: format!("/keys/{}", key),
         };
 
-        let bytes = serialize(&request).unwrap();
-
-        self.send_get_response(&bytes).await
+        todo!("get connection with self.get_connection(). \
+        Serialize request and send it to the server.\
+        Deserialize the response by creating a buffer and reading into it.\
+        Return the connection to the pool with self.return_connection(conn).");
     }
 
     async fn get_connection(&self) -> Result<TcpStream> {
@@ -124,19 +117,5 @@ impl PDBConnectionPool {
     async fn return_connection(&self, conn: TcpStream) {
         let mut pool = self.pool.lock().await;
         pool.push_back(conn);
-    }
-
-    async fn send_get_response(&self, bytes: &[u8]) -> Result<Response> {
-        let mut conn = self.get_connection().await?;
-
-        conn.write_all(bytes).await?;
-
-        let mut response_buf = vec![0; 256];
-        conn.read(&mut response_buf).await?;
-        let response: Response = deserialize(&response_buf).unwrap();
-
-        self.return_connection(conn).await;
-
-        Ok(response)
     }
 }

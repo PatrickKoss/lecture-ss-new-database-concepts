@@ -26,7 +26,7 @@ async fn main() {
     let args = Args::parse();
     let addr = env::var("ADDR").ok().unwrap_or(args.addr);
 
-    hashmap_log::replay_log(&*args.file);
+    hashmap_log::replay_log(&args.file);
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
     start_leader_server(addr.parse().unwrap()).await.unwrap();

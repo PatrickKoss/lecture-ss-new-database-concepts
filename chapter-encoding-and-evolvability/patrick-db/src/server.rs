@@ -98,41 +98,16 @@ async fn handle_get_key(stream: &mut tokio::net::TcpStream, request: Request) ->
 }
 
 async fn get_key(stream: &mut tokio::net::TcpStream, key: &str) -> Result<()> {
-    match hashmap_log::get(key) {
-        Some(key_value) => {
-            let response = Response {
-                status: 200,
-                key_value: Some(KeyValue {
-                    key: key.to_string(),
-                    value: key_value.value().clone(),
-                }),
-            };
-
-            send_response(stream, response).await?;
-
-            Ok(())
-        }
-        None => {
-            send_not_found(stream).await?;
-
-            Ok(())
-        }
-    }
+    todo!("get key from hashmap_log and send appropriate response")
 }
 
 async fn handle_update_key(stream: &mut tokio::net::TcpStream, request: Request) -> Result<()> {
     match request.clone().key_value {
         Some(key_value) => {
-            hashmap_log::insert(key_value.key.clone(), key_value.value.clone()).await?;
-
-            send_ok(stream).await?;
-
-            Ok(())
+            todo!("insert key to hashmap_log and send appropriate response")
         }
         None => {
-            send_bad_request(stream).await?;
-
-            Ok(())
+            todo!("handle bad request")
         }
     }
 }
@@ -153,18 +128,7 @@ async fn handle_delete_key(stream: &mut tokio::net::TcpStream, request: Request)
 }
 
 async fn delete_key(stream: &mut tokio::net::TcpStream, key: &str) -> Result<()> {
-    match hashmap_log::delete(key).await {
-        Ok(_) => {
-            send_ok(stream).await?;
-
-            Ok(())
-        }
-        Err(_) => {
-            send_not_found(stream).await?;
-
-            Ok(())
-        }
-    }
+    todo!("delete key from hashmap_log and send appropriate response")
 }
 
 async fn send_bad_request(stream: &mut tokio::net::TcpStream) -> Result<()> {
