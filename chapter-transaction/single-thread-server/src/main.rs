@@ -44,7 +44,7 @@ async fn handle_connection(mut stream: TcpStream, map: &mut std::collections::Ha
     \\Content-Type: application/json\
     \\Content-Length: 20\
     \\\
-    \\{\"key\":\"foo\",\"value\":\"bar\"}\
+    \\{{\"key\":\"foo\",\"value\":\"bar\"}}\
     \\keep in mind we need to trim the string by '\0'\
     \\after that we can deserialize the json body to KeyValue struct\
     \\serde_json::from_str::<KeyValue>(&string_body)
