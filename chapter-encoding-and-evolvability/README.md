@@ -7,6 +7,12 @@ database schema in a backward-compatible way. Therefore, we will create the Patr
 A binary protocol that is sent over a tcp connection.
 
 ## Task
+Once we have constructed our storage engine, we must devise a means of communicating with it. 
+The standard approach to interacting with a database involves utilizing a client-server 
+architecture. Specifically, the server will function as a tokio tcp listener that accepts 
+incoming connections, while the client will function as a tokio tcp client that establishes 
+a connection with the server. The client will send requests to the server via TCP using our 
+custom protocol, and the server will process the request and send a response back to the client.
 - [ ] Implement [get_key](patrick-db/src/server.rs)
 - [ ] Implement [handle_update_key](patrick-db/src/server.rs)
 - [ ] Implement [delete_key](patrick-db/src/server.rs)

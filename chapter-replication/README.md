@@ -5,6 +5,12 @@ data is consistent across all nodes, even in the presence of node failures.
 We will also discuss various replication topologies and their tradeoffs.
 
 ## Task
+In this chapter, we expand upon the previous database implementation to incorporate replication. 
+To accomplish this, we spawn a multi-producer single-consumer (mpsc) channel. 
+The leader node is responsible for transmitting all updates and deletion requests 
+to the channel, and the consumer node is responsible for forwarding the request to all followers. 
+The followers will then apply the request to their local state, 
+ensuring consistency across all replicas.
 - [ ] Implement [main/tokio::spawn](patrick-db/src/main.rs)
 - [ ] Implement [handle_update_key](patrick-db/src/server.rs)
 - [ ] Implement [delete_key](patrick-db/src/server.rs)
