@@ -6,6 +6,10 @@ In this chapter, we will conduct a small load test to compare the performance of
 single-threaded server versus a multi-threaded server.
 
 ## Task
+To compare their performance, we will create both a single-threaded server and a multi-threaded server, 
+then conduct a benchmark. The servers will parse the HTTP request and write to a hashmap based on the 
+request method and body. Once the implementation is complete, we will use [drill](https://github.com/fcsonline/drill)  
+to execute the benchmark.
 - [ ] Implement [single-thread-server/handle_connection](single-thread-server/src/main.rs)
 - [ ] Implement [multi-thread-server/](multi-thread-server/src/main.rs)
 - [ ] Run the benchmark `make benchmarksingle && make benchmarkmulti`

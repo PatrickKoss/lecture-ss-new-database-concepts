@@ -6,6 +6,11 @@ and range partitioning. We will also discuss how to handle data rebalancing and 
 in a partitioned system.
 
 ## Task
+Throughout the lecture, we have examined various methods for partitioning. These methods include 
+directing nodes towards the appropriate partition, employing a routing layer, or allowing the 
+client to route intelligently. Within this chapter, we will implement a basic partitioning strategy 
+from the client-side. This strategy is straightforward: hash the key, calculate the hash's modulo 
+using the number of partitions, and direct it to the correct partition.
 - [ ] Implement [new](patrick-db-client/src/lib.rs)
 - [ ] Implement [get](patrick-db-client/src/lib.rs)
 - [ ] Implement [update](patrick-db-client/src/lib.rs)
