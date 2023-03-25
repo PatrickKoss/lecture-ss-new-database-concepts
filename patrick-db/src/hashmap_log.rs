@@ -1,7 +1,6 @@
 use std::fs;
 use std::fs::{File, OpenOptions};
 use std::io::{BufWriter, Read, Write};
-use std::sync::{Arc};
 use dashmap::mapref::one::Ref;
 use anyhow::Result;
 use tokio::sync::Mutex;

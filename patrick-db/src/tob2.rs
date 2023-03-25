@@ -1,11 +1,17 @@
 use std::collections::HashSet;
 use std::net::SocketAddr;
+use tokio::sync::mpsc;
 
 use anyhow::Result;
 use bincode::{deserialize, serialize};
 use serde::{Deserialize, Serialize};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct ResponseSequencer {
+    counter: u64,
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum ActionType {
@@ -131,6 +137,16 @@ async fn handle_update_key(stream: &mut tokio::net::TcpStream, request: Request,
         let mut request = request.clone();
         request.route = "/tob".to_string();
         replica.log.push(request.message.clone());
+
+        // get sequence number
+        let mut listener = TcpStream::connect("127.0.0.1:7979").await.unwrap();
+        let mut request_buf = [0; 256];
+        let r = vec![1];
+        listener.write_all(&r).await.unwrap();
+        listener.read(&mut request_buf).await.unwrap();
+        let response: ResponseSequencer = deserialize(&request_buf).unwrap();
+        println!("response: {:?}", response.counter);
+
         println!("replica log: {:?}", &replica.log);
         for peer in replica.peers {
             let mut peer_stream = TcpStream::connect(peer).await.unwrap();
