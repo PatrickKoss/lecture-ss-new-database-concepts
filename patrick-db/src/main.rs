@@ -39,7 +39,7 @@ async fn main() {
     hashmap_log::replay_log(&*args.file);
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
-    // Create a multi-producer, multi-consumer channel with a buffer size of 100
+    // Create a multi-producer, consumer channel with a buffer size of 100
     let (tx, mut rx) = mpsc::channel::<Request>(100);
 
     // Spawn a task to receive messages from the channel
