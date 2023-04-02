@@ -1,6 +1,7 @@
 use std::{time::{Duration, Instant}};
 use std::collections::HashMap;
 use std::sync::Arc;
+use log::log;
 
 use raft::{raw_node::RawNode, Storage as RaftStorage};
 use raft::eraftpb::Entry;
@@ -11,7 +12,6 @@ use tokio::sync::Mutex;
 use crate::raft_storage::Storage;
 
 pub async fn run_node(mut node: RawNode<Storage>, mut rx: Receiver<Msg>, node_channels: Arc<Mutex<HashMap<u64, Sender<Msg>>>>) {
-    // Ticking the Raft node
     let timeout = Duration::from_millis(100);
     let mut remaining_timeout = timeout;
 
@@ -19,20 +19,32 @@ pub async fn run_node(mut node: RawNode<Storage>, mut rx: Receiver<Msg>, node_ch
         let now = Instant::now();
 
         match rx.recv().await {
+            // used to send message from other thread to node
             Some(Msg::Propose { id, callback: _ }) => {
+                // propose send a message from node to leader
                 log::info!("Propose: {:?}", id);
                 if let Err(e) = node.propose(vec![], vec![id]) {
                     log::error!("Propose error: {:?}", e);
-                }
+                };
             }
+            // used to receive message from other node
             Some(Msg::Raft(m)) => {
                 log::info!("got raft message: {:?}", m);
-                node.step(m).unwrap()
+                // step advances the state machine using the given message.
+                if let Err(e) = node.step(m) {
+                    log::error!("step error: {:?}", e);
+                }
+                // example propose since rx is dropped after this execution
+                if let Err(e) = node.propose(vec![], vec![1]) {
+                    log::error!("Propose error: {:?}", e);
+                }
+                // we could assume continue should solve the issue of dropping rx but it does not
+                // continue;
             },
-            Some(Msg::RaftEntry(entry)) => node.mut_store().save_entries(&[entry]).unwrap(),
             None => (),
         }
 
+        // tick advances the internal logical clock by a single tick.
         let elapsed = now.elapsed();
         if elapsed >= remaining_timeout {
             remaining_timeout = timeout;
@@ -41,9 +53,11 @@ pub async fn run_node(mut node: RawNode<Storage>, mut rx: Receiver<Msg>, node_ch
             remaining_timeout -= elapsed;
         }
 
+        // we can only work with nodes that are ready
         if !node.has_ready() {
             continue;
         }
+        log::info!("node is ready");
 
         let mut ready = node.ready();
 
@@ -76,6 +90,7 @@ pub async fn run_node(mut node: RawNode<Storage>, mut rx: Receiver<Msg>, node_ch
                 continue;
             }
 
+            // here we can eventually pass the store and handle the changes
             match entry.get_entry_type() {
                 EntryType::EntryNormal => handle_normal(entry),
                 EntryType::EntryConfChange => handle_conf_change(entry),
@@ -109,6 +124,7 @@ pub async fn run_node(mut node: RawNode<Storage>, mut rx: Receiver<Msg>, node_ch
         handle_messages(light_rd.take_messages());
         handle_committed_entries(light_rd.take_committed_entries());
         node.advance_apply();
+        log::info!("node applied to {}", last_apply_index);
     }
 }
 
@@ -118,7 +134,6 @@ pub enum Msg {
         callback: Box<dyn Fn() + Send>,
     },
     Raft(Message),
-    RaftEntry(Entry),
 }
 
 fn handle_normal(entry: Entry) {

@@ -100,6 +100,7 @@ impl raft::Storage for Storage {
     }
 
     fn term(&self, idx: u64) -> RaftResult<u64> {
+        log::info!("term({})", idx);
         if idx == 0 {
             return Ok(0);
         }

@@ -25,6 +25,8 @@ async fn main() {
     let logger = create_logger();
 
     let node_channels = Arc::new(Mutex::new(HashMap::<u64, Sender<raft_node::Msg>>::new()));
+
+    // start all raft nodes in tokio thread
     let voters = vec![1, 2, 3];
     for voter in &voters {
         let config = Config {
@@ -33,12 +35,19 @@ async fn main() {
             election_tick: 3,
             ..Default::default()
         };
+
         let storage = raft_storage::Storage::new(voters.clone());
         let node = RawNode::new(&config, storage, &logger).unwrap();
+
+        // to communicate with other nodes we need to create a channel
         let (tx, rx) = channel::<raft_node::Msg>(1000);
         let mut node_channels_insert = node_channels.lock().await;
+
+        // insert channel into hashmap
         node_channels_insert.insert(*voter, tx.clone());
         drop(node_channels_insert);
+
+        // pass hashmap to node
         let node_channels_clone = node_channels.clone();
         tokio::spawn(async move {
             raft_node::run_node(node, rx, node_channels_clone).await;
