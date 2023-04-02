@@ -52,3 +52,14 @@ problems, and we need to exercise caution to avoid anomalies. As a result, we in
 the concept of a single-threaded server to circumvent concurrency issues. 
 In this chapter, we will conduct a small load test to compare the performance of a 
 single-threaded server versus a multi-threaded server.
+
+### Consistency
+During the lecture, we examined the concept of linearizability, a property that ensures a consistent view of the
+database even when dealing with numerous replicas. To achieve linearizability, we explored various approaches,
+including sequential ordering, causal ordering, timestamp ordering, and Lamport timestamps, ultimately arriving at
+total order broadcast. In this chapter, we will implement a total order broadcast protocol.
+
+### Consensus
+In the final section of the lecture, we delved into the criticality of achieving consensus,
+particularly for use in total order broadcast or single leader replication.
+In this chapter, we will dive deeper into the raft library and undertake the implementation of a raft store.
